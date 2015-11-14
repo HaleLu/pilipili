@@ -24,13 +24,21 @@ namespace pilipili
             Brushes.White, Brushes.White, Brushes.White, Brushes.White, Brushes.White
         };
 
+        //弹幕库
+        private static readonly string[] messageLib =
+        {
+            "23333", "我从未见过如此厚颜无耻之人", "前方高能，弹幕护体", "前方高能反应，非战斗人员迅速撤退", "这不科学", "666666666", "是在下输了", "BGM爱的供养，再问自杀",
+            "硬币已投", "马克", "放学别走", "我裤子都脱了，你就给我看这个？", "暂停学表情", "以上企业均已破产", "在座的各位都是辣鸡", "不就是膝盖吗，拿去好了"
+        };
+
         //弹幕标签列表（循环队列）
         private static readonly Label[] labelList = new Label[1024];
         //初始化布局
         private readonly Grid g = new Grid {Margin = new Thickness(0, 0, 0, 0)};
         //随机数生成器
         private readonly Random rd = new Random();
-        
+        private readonly int speed = 4;
+
         //发送GET请求的定时器
         private readonly Timer timer_get = new Timer();
         //移动弹幕的定时器
@@ -73,11 +81,12 @@ namespace pilipili
             Dispatcher.Invoke(
                 delegate
                 {
-                    for (var i = begin; i < end; i++)
+                    for (var i = begin; Between(i, begin, end); i++, i %= 1024)
                     {
-                        labelList[i].Margin = new Thickness(labelList[i].Margin.Left + 4, labelList[i].Margin.Top, 0, 0);
+                        labelList[i].Margin = new Thickness(labelList[i].Margin.Left - speed, labelList[i].Margin.Top, 0,
+                            0);
 
-                        if (labelList[i].Margin.Left >= this.Width)
+                        if (labelList[i].Margin.Left < -Width)
                         {
                             g.Children.Remove(labelList[i]);
                             labelList[i] = null;
@@ -92,26 +101,59 @@ namespace pilipili
         //弹幕生成器（测试用）
         private void GenMessageEvent(object sender, ElapsedEventArgs e)
         {
-            Dispatcher.Invoke(
-                delegate
+            if (rd.Next()%5 != 0) return;
+            var num = rd.Next()%5;
+            if (num == 0)
+            {
+                if (rd.Next()%4 == 0)
                 {
-                    var l = new Label
+                    var content = messageLib[rd.Next()%16];
+                    for (var i = 0; i < 10; i++)
                     {
-                        Content = rd.NextDouble(),
-                        //Content = e.SignalTime.ToString(),
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Top,
-                        Margin = new Thickness(-Width, rd.NextDouble()*Height, 0, 0),
-                        UseLayoutRounding = true,
-                        Foreground = colorList[rd.Next()%16],
-                        FontSize = 30
-                    };
-                    labelList[end] = l;
-                    end++;
-                    end %= 1024;
-                    g.Children.Add(l);
+                        Dispatcher.Invoke(
+                            delegate
+                            {
+                                var l = new Label
+                                {
+                                    Content = content,
+                                    HorizontalAlignment = HorizontalAlignment.Left,
+                                    VerticalAlignment = VerticalAlignment.Top,
+                                    Margin = new Thickness(Width, i*60, 0, 0),
+                                    UseLayoutRounding = true,
+                                    Foreground = colorList[rd.Next()%16],
+                                    FontSize = 30
+                                };
+                                labelList[end] = l;
+                                end++;
+                                end %= 1024;
+                                g.Children.Add(l);
+                            }
+                            );
+                    }
                 }
-                );
+            }
+            for (var i = 0; i < num; i++)
+            {
+                Dispatcher.Invoke(
+                    delegate
+                    {
+                        var l = new Label
+                        {
+                            Content = messageLib[rd.Next()%16],
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            VerticalAlignment = VerticalAlignment.Top,
+                            Margin = new Thickness(Width, rd.NextDouble()*(Height - 100), 0, 0),
+                            UseLayoutRounding = true,
+                            Foreground = colorList[rd.Next()%16],
+                            FontSize = 30
+                        };
+                        labelList[end] = l;
+                        end++;
+                        end %= 1024;
+                        g.Children.Add(l);
+                    }
+                    );
+            }
         }
 
         //发送GET请求并用返回值生成弹幕
@@ -130,7 +172,7 @@ namespace pilipili
                             Content = message["content"],
                             HorizontalAlignment = HorizontalAlignment.Left,
                             VerticalAlignment = VerticalAlignment.Top,
-                            Margin = new Thickness(-Width, rd.NextDouble()*Height, 0, 0),
+                            Margin = new Thickness(Width, rd.NextDouble() * (Height - 100), 0, 0),
                             UseLayoutRounding = true,
                             Foreground = colorList[rd.Next()%16],
                             FontSize = 30
@@ -160,6 +202,19 @@ namespace pilipili
             myResponseStream.Close();
 
             return retString;
+        }
+
+        private static bool Between(int i, int begin, int end)
+        {
+            if (begin <= end)
+            {
+                if (i < end) return true;
+            }
+            else
+            {
+                if (i >= begin || i < end) return true;
+            }
+            return false;
         }
     }
 }

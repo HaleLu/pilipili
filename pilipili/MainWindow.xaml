@@ -5,8 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:pilipili"
         mc:Ignorable="d"
-        Title="MainWindow" WindowStyle="None" AllowsTransparency="True" UseLayoutRounding="True" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" WindowState="Maximized" Loaded="Window_Loaded" Visibility="Collapsed" Topmost="True">
+        Title="MainWindow" WindowStyle="None" AllowsTransparency="True" UseLayoutRounding="True" ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized" Loaded="Window_Loaded" Visibility="Collapsed"
+        Topmost="True">
     <Window.Background>
-        <ImageBrush/>
+        <ImageBrush />
     </Window.Background>
 </Window>
