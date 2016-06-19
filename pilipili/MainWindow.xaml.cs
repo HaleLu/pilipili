@@ -14,10 +14,10 @@ namespace pilipili
     /// <summary>
     ///     MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         //颜色列表
-        private static readonly SolidColorBrush[] colorList =
+        private static readonly SolidColorBrush[] ColorList =
         {
             Brushes.AliceBlue, Brushes.Aqua, Brushes.Black, Brushes.Blue,
             Brushes.BlueViolet, Brushes.Red, Brushes.Gold, Brushes.White, Brushes.White, Brushes.White, Brushes.White,
@@ -25,54 +25,58 @@ namespace pilipili
         };
 
         //弹幕库
-        private static readonly string[] messageLib =
+/*        private static readonly string[] MessageLib =
         {
             "23333", "我从未见过如此厚颜无耻之人", "前方高能，弹幕护体", "前方高能反应，非战斗人员迅速撤退", "这不科学", "666666666", "是在下输了", "BGM爱的供养，再问自杀",
             "硬币已投", "马克", "放学别走", "我裤子都脱了，你就给我看这个？", "暂停学表情", "以上企业均已破产", "在座的各位都是辣鸡", "不就是膝盖吗，拿去好了"
-        };
+        };*/
 
         //弹幕标签列表（循环队列）
-        private static readonly Label[] labelList = new Label[1024];
+        private static readonly Label[] LabelList = new Label[1024];
         //初始化布局
-        private readonly Grid g = new Grid {Margin = new Thickness(0, 0, 0, 0)};
+        private readonly Grid _g = new Grid {Margin = new Thickness(0, 0, 0, 0)};
         //随机数生成器
-        private readonly Random rd = new Random();
+        private readonly Random _rd = new Random();
         private readonly int speed = 4;
 
         //发送GET请求的定时器
-        private readonly Timer timer_get = new Timer();
+        private readonly Timer _timerGet = new Timer();
         //移动弹幕的定时器
-        private readonly Timer timer_move = new Timer();
+        private readonly Timer _timerMove = new Timer();
 
         //循环队列的头和尾序号
-        private int begin;
-        private int end;
+        private int _begin;
+        private int _end;
 
         //当前已从服务器接收到的弹幕id
-        private int id;
+        private int _id;
 
-        public MainWindow()
+        //房间号
+        private readonly int _roomId;
+
+        public MainWindow(int roomId)
         {
+            _roomId = roomId;
             InitializeComponent();
         }
 
         //初始化两个计时器
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            timer_move.Elapsed += MoveLabelEvent;
-            timer_move.Interval = 10;
-            timer_move.Start();
-            timer_move.Enabled = true;
+            _timerMove.Elapsed += MoveLabelEvent;
+            _timerMove.Interval = 10;
+            _timerMove.Start();
+            _timerMove.Enabled = true;
 
-            timer_get.Elapsed += SendGetEvent;
-            timer_get.Elapsed += GenMessageEvent;
-            timer_get.Interval = 1000;
-            timer_get.Start();
-            timer_get.Enabled = true;
-            AddChild(g);
+            _timerGet.Elapsed += SendGetEvent;
+//            _timerGet.Elapsed += GenMessageEvent;
+            _timerGet.Interval = 1000;
+            _timerGet.Start();
+            _timerGet.Enabled = true;
+            AddChild(_g);
 
-            GC.KeepAlive(timer_move);
-            GC.KeepAlive(timer_get);
+            GC.KeepAlive(_timerMove);
+            GC.KeepAlive(_timerGet);
         }
 
         //弹幕移动
@@ -81,35 +85,35 @@ namespace pilipili
             Dispatcher.Invoke(
                 delegate
                 {
-                    for (var i = begin; Between(i, begin, end); i++, i %= 1024)
+                    for (var i = _begin; Between(i, _begin, _end); i++, i %= 1024)
                     {
-                        labelList[i].Margin = new Thickness(labelList[i].Margin.Left - speed, labelList[i].Margin.Top, 0,
+                        LabelList[i].Margin = new Thickness(LabelList[i].Margin.Left - speed, LabelList[i].Margin.Top, 0,
                             0);
 
-                        if (labelList[i].Margin.Left < -Width)
-                        {
-                            g.Children.Remove(labelList[i]);
-                            labelList[i] = null;
-                            begin++;
-                            begin %= 1024;
-                        }
+                        if (!(LabelList[i].Margin.Left < -Width)) continue;
+                        _g.Children.Remove(LabelList[i]);
+                        LabelList[i] = null;
+                        _begin++;
+                        _begin %= 1024;
                     }
                 }
                 );
         }
 
         //弹幕生成器（测试用）
+/*
         private void GenMessageEvent(object sender, ElapsedEventArgs e)
         {
-            if (rd.Next()%5 != 0) return;
-            var num = rd.Next()%5;
+            if (_rd.Next()%5 != 0) return;
+            var num = _rd.Next()%5;
             if (num == 0)
             {
-                if (rd.Next()%4 == 0)
+                if (_rd.Next()%4 == 0)
                 {
-                    var content = messageLib[rd.Next()%16];
-                    for (var i = 0; i < 10; i++)
+                    var content = MessageLib[_rd.Next()%16];
+                    for (var i = 0; i < 20; i++)
                     {
+                        var level = i;
                         Dispatcher.Invoke(
                             delegate
                             {
@@ -118,15 +122,15 @@ namespace pilipili
                                     Content = content,
                                     HorizontalAlignment = HorizontalAlignment.Left,
                                     VerticalAlignment = VerticalAlignment.Top,
-                                    Margin = new Thickness(Width, i*60, 0, 0),
+                                    Margin = new Thickness(Width, level * 40, 0, 0),
                                     UseLayoutRounding = true,
-                                    Foreground = colorList[rd.Next()%16],
+                                    Foreground = ColorList[_rd.Next()%16],
                                     FontSize = 30
                                 };
-                                labelList[end] = l;
-                                end++;
-                                end %= 1024;
-                                g.Children.Add(l);
+                                LabelList[_end] = l;
+                                _end++;
+                                _end %= 1024;
+                                _g.Children.Add(l);
                             }
                             );
                     }
@@ -139,69 +143,86 @@ namespace pilipili
                     {
                         var l = new Label
                         {
-                            Content = messageLib[rd.Next()%16],
+                            Content = MessageLib[_rd.Next()%16],
                             HorizontalAlignment = HorizontalAlignment.Left,
                             VerticalAlignment = VerticalAlignment.Top,
-                            Margin = new Thickness(Width, rd.NextDouble()*(Height - 100), 0, 0),
+                            Margin = new Thickness(Width, _rd.NextDouble()*(Height - 100), 0, 0),
                             UseLayoutRounding = true,
-                            Foreground = colorList[rd.Next()%16],
+                            Foreground = ColorList[_rd.Next()%16],
                             FontSize = 30
                         };
-                        labelList[end] = l;
-                        end++;
-                        end %= 1024;
-                        g.Children.Add(l);
+                        LabelList[_end] = l;
+                        _end++;
+                        _end %= 1024;
+                        _g.Children.Add(l);
                     }
                     );
             }
         }
+*/
 
         //发送GET请求并用返回值生成弹幕
         private void SendGetEvent(object sender, ElapsedEventArgs e)
         {
-            var json = HttpGet("http://2.countdown2014.sinaapp.com/index.php", "id=" + id);
-            var jo = (JObject) JsonConvert.DeserializeObject(json);
-            var res = JArray.Parse(jo["data"].ToString());
-            foreach (var message in res)
+            var json = HttpGet("http://pilipili.azurewebsites.net/index.php", "id=" + _id + "&roomId=" + _roomId);
+
+            try
             {
-                Dispatcher.Invoke(
-                    delegate
-                    {
-                        var l = new Label
+                var res = JArray.Parse(((JObject)JsonConvert.DeserializeObject(json))["data"].ToString());
+                foreach (var message in res)
+                {
+                    Dispatcher.Invoke(
+                        delegate
                         {
-                            Content = message["content"],
-                            HorizontalAlignment = HorizontalAlignment.Left,
-                            VerticalAlignment = VerticalAlignment.Top,
-                            Margin = new Thickness(Width, rd.NextDouble() * (Height - 100), 0, 0),
-                            UseLayoutRounding = true,
-                            Foreground = colorList[rd.Next()%16],
-                            FontSize = 30
-                        };
-                        labelList[end] = l;
-                        end++;
-                        end %= 1024;
-                        g.Children.Add(l);
-                    }
-                    );
-                id = id > int.Parse(message["id"].ToString()) ? id : int.Parse(message["id"].ToString());
+                            var l = new Label
+                            {
+                                Content = message["content"],
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                VerticalAlignment = VerticalAlignment.Top,
+                                Margin = new Thickness(Width, _rd.NextDouble() * (Height - 100), 0, 0),
+                                UseLayoutRounding = true,
+                                Foreground = ColorList[_rd.Next() % 16],
+                                FontSize = 30
+                            };
+                            LabelList[_end] = l;
+                            _end++;
+                            _end %= 1024;
+                            _g.Children.Add(l);
+                        }
+                        );
+                    _id = _id > int.Parse(message["id"].ToString()) ? _id : int.Parse(message["id"].ToString());
+                }
+            }
+            catch
+            {
+                // ignored
             }
         }
 
         //GET方法模板
-        public string HttpGet(string Url, string postDataStr)
+        public string HttpGet(string url, string postDataStr)
         {
-            var request = (HttpWebRequest) WebRequest.Create(Url + (postDataStr == "" ? "" : "?") + postDataStr);
+            var request = (HttpWebRequest) WebRequest.Create(url + (postDataStr == "" ? "" : "?") + postDataStr);
             request.Method = "GET";
             request.ContentType = "text/html;charset=UTF-8";
-
-            var response = (HttpWebResponse) request.GetResponse();
-            var myResponseStream = response.GetResponseStream();
-            var myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("utf-8"));
-            var retString = myStreamReader.ReadToEnd();
-            myStreamReader.Close();
-            myResponseStream.Close();
-
-            return retString;
+            try
+            {
+                var response = (HttpWebResponse) request.GetResponse();
+                var myResponseStream = response.GetResponseStream();
+                if (myResponseStream != null)
+                {
+                    var myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("utf-8"));
+                    var retString = myStreamReader.ReadToEnd();
+                    myStreamReader.Close();
+                    myResponseStream.Close();
+                    return retString;
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+            return null;
         }
 
         private static bool Between(int i, int begin, int end)
