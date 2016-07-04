@@ -37,7 +37,7 @@ namespace pilipili
         private readonly Grid _g = new Grid {Margin = new Thickness(0, 0, 0, 0)};
         //随机数生成器
         private readonly Random _rd = new Random();
-        private readonly int speed = 4;
+        private const int Speed = 4;
 
         //发送GET请求的定时器
         private readonly Timer _timerGet = new Timer();
@@ -87,7 +87,7 @@ namespace pilipili
                 {
                     for (var i = _begin; Between(i, _begin, _end); i++, i %= 1024)
                     {
-                        LabelList[i].Margin = new Thickness(LabelList[i].Margin.Left - speed, LabelList[i].Margin.Top, 0,
+                        LabelList[i].Margin = new Thickness(LabelList[i].Margin.Left - Speed, LabelList[i].Margin.Top, 0,
                             0);
 
                         if (!(LabelList[i].Margin.Left < -Width)) continue;
